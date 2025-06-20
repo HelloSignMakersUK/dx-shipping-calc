@@ -151,15 +151,39 @@ Total (inc VAT): £${totalWithVat.toFixed(2)}`;
   }
 
   function sendEmail() {
-    const to = document.getElementById('email').value;
-    const cc = document.getElementById('cc').value;
-    const result = document.getElementById('result').textContent || '';
-    const postcode = document.getElementById('postcode').value.trim();
+  const to = document.getElementById('email').value;
+  const cc = document.getElementById('cc').value;
+  const result = document.getElementById('result').textContent || '';
+  const postcode = document.getElementById('postcode').value.trim();
 
-    if (!to || !postcode || result === '') {
-      alert('Please complete all fields and calculate shipping before sending email.');
-      return;
-    }
+  const weights = [...document.querySelectorAll('.weight')].map(i => parseFloat(i.value) || 0);
+  const lengths = [...document.querySelectorAll('.length')].map(i => parseFloat(i.value) || 0);
+  const widths = [...document.querySelectorAll('.width')].map(i => parseFloat(i.value) || 0);
+  const heights = [...document.querySelectorAll('.height')].map(i => parseFloat(i.value) || 0);
+
+  if (!to || !postcode || result === '' || weights.includes(0) || lengths.includes(0) || widths.includes(0) || heights.includes(0)) {
+    alert('Please complete all fields and calculate shipping before sending email.');
+    return;
+  }
+
+  let parcelDetails = '';
+  for (let i = 0; i < weights.length; i++) {
+    parcelDetails += `- Parcel ${i + 1}: Weight: ${weights[i]}kg, Dimensions: ${lengths[i]}x${widths[i]}x${heights[i]}cm\n`;
+  }
+
+  const subject = encodeURIComponent('DX Collection Request');
+  const body = encodeURIComponent(
+    `Hi all,\n\n` +
+    `Please arrange a collection for the following parcels:\n\n` +
+    `${parcelDetails}\n` +
+    `Total number of parcels: ${weights.length}\n` +
+    `Destination postcode: ${postcode}\n\n` +
+    `Manifest summary and cost breakdown:\n${result}\n\n` +
+    `Many thanks,\nSign Makers UK`
+  );
+
+  window.location.href = `mailto:${to}?cc=${cc}&subject=${subject}&body=${body}`;
+}
 
     const subject = encodeURIComponent('DX Collection Request');
     const body = encodeURIComponent(`Please arrange a collection for parcels going to postcode ${postcode}.
