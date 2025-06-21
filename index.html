@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>DX Shipping Calculator</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .parcel-group { margin-bottom: 10px; }
+    .parcel-group input { width: 80px; margin-right: 5px; }
+    #result { white-space: pre-wrap; margin-top: 20px; }
+    .error { color: red; }
+    #email { width: 100%; }
+  </style>
+
+<body>
+  <div style="display: flex; justify-content: space-between; align-items: start;">
+    <h2>DX Shipping Calculator</h2>
+    <div style="text-align: right; font-weight: bold;">SAME DAY COLLECTION:<br>Submit before <strong>11am</strong>.<br>Collection is between <strong>2–3pm</strong>.</div>
+  </div>
+
+  <div id="parcels"></div>
+  <button id="addParcelBtn">Add Parcel</button>
+
+  <div>
+    <label>Destination Postcode: <input id="postcode" required></label><br><br>
+    <label>Fuel Surcharge (%): <input id="fuel" type="number" value="13.95" required></label><br><br>
+
+    <fieldset>
+      <legend>Additional Options</legend>
+      <label><input type="checkbox" class="extra" value="Residential Delivery|10.90"> Residential Delivery (+£10.90)</label><br>
+      <label><input type="checkbox" class="extra" value="Pre-Noon Delivery|15.70"> Pre-Noon Delivery (+£15.70)</label><br>
+      <label><input type="checkbox" class="extra" value="Pre-9:30am Delivery|39.00"> Pre-9:30am Delivery (+£39.00)</label><br>
+      <label><input type="checkbox" class="extra" value="Saturday Delivery|32.00"> Saturday Delivery (+£32.00)</label><br>
+      <label><input type="checkbox" class="extra" value="Saturday Pre-9:30am Delivery|50.00"> Saturday Pre-9:30am Delivery (+£50.00)</label><br>
+      <label><input type="checkbox" class="extra" value="Increased Insurance|20.00"> Insurance Upgrade to £5,000 (+£20.00)</label>
+    </fieldset>
+
+    <br>
+    <label>Courier Email: <input id="email" value="Jackie.Kingman@dxdelivery.com; Nick.Scott@dxdelivery.com; Tasha.Joyce@dxdelivery.com; Brendon.Bridge@dxdelivery.com; Richard.Flambard@dxdelivery.com; Depot18@dxdelivery.com"></label><br><br>
+    <label>CC: <input id="cc" value="hello@signmakersuk.com"></label><br><br>
+
+    <button id="calculateShippingBtn">Calculate Shipping</button>
+    <button id="sendEmailBtn">Send Collection Request</button>
+    <p class="error" id="error"></p>
+  </div>
+
+  <div id="result"></div>
+
+  <h3>Instructions</h3>
+  <div>
+    <p><strong>STEP 1:</strong> Package parcels securely and attach a delivery note inside a plastic envelope to each parcel.</p>
+    <p><strong>STEP 2:</strong> Measure and weigh each parcel and fill out the details above. Fuel surcharge can be found on DX paperwork (currently 13.95% as of 20/06/2025).</p>
+    <p><strong>STEP 3:</strong> Log in to <a href="https://dm6.dxfreight.co.uk/logon/logon.aspx" target="_blank">Dispatch Manager 6 Light</a> using:<br>
+    Depot: <strong>95</strong><br>
+    Account No.: <strong>93022848</strong><br>
+    Password: <strong>b25i3c</strong></p>
+    <p><strong>STEP 4:</strong> Use Dispatch Manager 6 Light and follow consignment entry instructions.</p>
+    <p><strong>STEP 5:</strong> Produce a consignment for each parcel/destination using our (SMUK) quote number (e.g. Q12345) as a reference (this is shown on the delivery note). Print a label for each parcel. (Label paper is stored in the cabinet underneath the printer.)</p>
+    <p><strong>STEP 6:</strong> Stick each printed label to the corresponding parcel. Ensure the quote number matches the one on the attached delivery note.</p>
+    <p><strong>STEP 7:</strong> Once all consignments for the day have been entered, print <strong>2 copies of the manifest</strong>.</p>
+    <p><strong>STEP 8:</strong> When the driver collects, ask them to sign both printed manifests. The driver takes one copy and SMUK retains the other.</p>
+      </div>
+
+  <script>
+  function addParcel() {
+    const parcelsDiv = document.getElementById('parcels');
+    const index = parcelsDiv.children.length + 1;
+
+    const group = document.createElement('div');
+    group.className = 'parcel-group';
+    group.innerHTML = `
+      <strong>Parcel ${index}:</strong>
+      <label>Weight (kg): <input type="number" step="0.01" required></label>
+      <label>Length (cm): <input type="number" required></label>
+      <label>Width (cm): <input type="number" required></label>
+      <label>Height (cm): <input type="number" required></label>
+      <button onclick="this.parentNode.remove();">Remove</button>
+      <br>
+    `;
+    parcelsDiv.appendChild(group);
+  }
+
+  document.getElementById('addParcelBtn').addEventListener('click', addParcel);
+</script>
+
+<script>
+  document.getElementById('calculateShippingBtn').addEventListener('click', () => {
+    const parcels = [...document.querySelectorAll('.parcel-group')].map(group => {
+      const inputs = group.querySelectorAll('input');
+      return {
+        weight: parseFloat(inputs[0].value),
+        length: parseFloat(inputs[1].value),
+        width: parseFloat(inputs[2].value),
+        height: parseFloat(inputs[3].value)
+      };
+    });
+
+    if (parcels.some(p => isNaN(p.weight) || isNaN(p.length) || isNaN(p.width) || isNaN(p.height))) {
+      document.getElementById('error').textContent = 'Please fill out all parcel dimensions and weights.';
+      return;
+    }
+
+    const postcode = document.getElementById('postcode').value.trim();
+    const fuelPct = parseFloat(document.getElementById('fuel').value);
+    const extras = [...document.querySelectorAll('.extra:checked')].map(e => e.value.split('|'));
+
+    let baseCost = 8.5; // starting base rate
+    const totalWeight = parcels.reduce((sum, p) => sum + Math.max(p.weight, (p.length * p.width * p.height) / 5000), 0);
+
+    if (totalWeight > 20) baseCost += (Math.ceil(totalWeight - 20) * 0.5);
+
+    let extrasTotal = extras.reduce((sum, [, cost]) => sum + parseFloat(cost), 0);
+
+    const fuelSurcharge = ((baseCost + extrasTotal) * fuelPct) / 100;
+    const total = baseCost + extrasTotal + fuelSurcharge;
+
+    const result = `Base Cost: £${baseCost.toFixed(2)}
+Extras: £${extrasTotal.toFixed(2)}
+Fuel Surcharge: £${fuelSurcharge.toFixed(2)}
+
+Total: £${total.toFixed(2)} (excl. VAT)
+Total inc. VAT: £${(total * 1.2).toFixed(2)}
+
+Selected Extras:
+${extras.map(([desc, cost]) => `- ${desc} (+£${parseFloat(cost).toFixed(2)})`).join('%0A')}`;
+
+    document.getElementById('result').textContent = result;
+    document.getElementById('error').textContent = '';
+  });
+
+  document.getElementById('sendEmailBtn').addEventListener('click', () => {
+    const emailTo = document.getElementById('email').value;
+    const cc = document.getElementById('cc').value;
+    const result = document.getElementById('result').textContent.replace(/
+/g, '%0A');
+
+    const parcels = [...document.querySelectorAll('.parcel-group')].map((group, i) => {
+      const inputs = group.querySelectorAll('input');
+      return `Parcel ${i + 1}: ${inputs[0].value}kg, ${inputs[1].value} x ${inputs[2].value} x ${inputs[3].value} cm`;
+    }).join('%0A');
+
+    const subject = encodeURIComponent('DX Collection Request');
+    const body = encodeURIComponent(`Hi all,%0A%0APlease arrange collection for the following parcel(s):%0A%0A${parcels}%0A%0A${result}%0A%0AThank you.`);
+
+    window.location.href = `mailto:${emailTo}?cc=${cc}&subject=${subject}&body=${body}`;
+  });
+</script>
+<!-- script remains unchanged -->
+</body>
+</html>
