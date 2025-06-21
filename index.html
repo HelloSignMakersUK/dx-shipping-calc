@@ -134,6 +134,7 @@ ${extras.map(([desc, cost]) => `- ${desc} (+£${parseFloat(cost).toFixed(2)})`).
     const result = document.getElementById('result').textContent.replace(/\n/g, '%0A');
 
 
+
     const parcels = [...document.querySelectorAll('.parcel-group')].map((group, i) => {
       const inputs = group.querySelectorAll('input');
       return `Parcel ${i + 1}: ${inputs[0].value}kg, ${inputs[1].value} x ${inputs[2].value} x ${inputs[3].value} cm`;
