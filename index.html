@@ -131,8 +131,8 @@ ${extras.map(([desc, cost]) => `- ${desc} (+£${parseFloat(cost).toFixed(2)})`).
   document.getElementById('sendEmailBtn').addEventListener('click', () => {
     const emailTo = document.getElementById('email').value;
     const cc = document.getElementById('cc').value;
-    const result = document.getElementById('result').textContent.replace(/
-/g, '%0A');
+    const result = document.getElementById('result').textContent.replace(/\n/g, '%0A');
+
 
     const parcels = [...document.querySelectorAll('.parcel-group')].map((group, i) => {
       const inputs = group.querySelectorAll('input');
