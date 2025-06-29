@@ -109,5 +109,35 @@
       document.getElementById('result').innerHTML = tableHTML;
     });
   </script>
+  <script>
+document.addEventListener('DOMContentLoaded', () => {
+  const shipmentsDiv = document.getElementById('shipments');
+  const sendBtn = document.getElementById('sendEmailBtn');
+  if (!sendBtn) {
+    console.error('Send Collection Request button not found.');
+    return;
+  }
+  sendBtn.addEventListener('click', () => {
+    let body = 'Hi all,%0D%0A%0D%0APlease arrange collection for the following consignment(s):%0D%0A%0D%0A';
+    shipmentsDiv.querySelectorAll('.shipment').forEach((shipment, index) => {
+      const postcode = shipment.querySelector('input[type="text"]').value;
+      body += `Consignment ${index + 1} - Postcode: ${postcode}%0D%0A`;
+      const parcels = shipment.querySelectorAll('.parcel-group');
+      parcels.forEach((parcel, pIndex) => {
+        const values = parcel.querySelectorAll('input');
+        body += `Parcel ${pIndex + 1}: ${values[0].value}kg, ${values[1].value}x${values[2].value}x${values[3].value} cm%0D%0A`;
+      });
+      const timingRadio = shipment.querySelector('input[type="radio"]:checked');
+      const timing = timingRadio && timingRadio.nextSibling ? timingRadio.nextSibling.textContent.trim() : 'N/A';
+      let extras = [];
+      if (shipment.querySelector('input[value="residential"]').checked) extras.push('Residential');
+      if (shipment.querySelector('input[value="insurance"]').checked) extras.push('Extra Insurance');
+      body += `Service: ${timing}, Extras: ${extras.join(', ') || 'None'}%0D%0A%0D%0A`;
+    });
+    body += 'Unit 5, Hawkwell Business Centre, Maidstone Road, Pembury, Tunbridge Wells, Kent, TN2 4AG';
+    window.location.href = `mailto:sophie.harris@dxdelivery.com?cc=hello@signmakersuk.com&subject=DX Collection Request&body=${body}`;
+  });
+});
+</script>
 </body>
 </html>
