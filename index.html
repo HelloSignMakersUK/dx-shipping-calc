@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>DX Shipping Calculator</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .shipment { border: 1px solid #ccc; padding: 10px; margin-bottom: 20px; }
+    .parcel-group input { width: 80px; margin-right: 5px; }
+    .extras { display: grid; grid-template-columns: 1fr 1fr; column-gap: 20px; max-width: 600px; }
+    .extras label { margin-bottom: 8px; }
+    #cutoff { font-weight: bold; position: absolute; top: 20px; right: 20px; text-align: right; }
+    ol li { margin-bottom: 15px; line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <h2>DX Shipping Calculator</h2>
+  <div id="cutoff">Same Day Collection Cut Off: 11am<br>Estimated Collection: 2–3pm</div>
+  <div id="shipments"></div>
+  <button id="addShipmentBtn">Add Another Consignment</button>
+  <button id="calculateShippingBtn">Calculate Shipping</button>
+  <button id="sendEmailBtn">Send Collection Request</button>
+  <div id="result"></div>
+  <h3>Instructions</h3>
+  <ol>
+    <li><strong>Package parcels</strong> securely and attach a delivery note in a plastic envelope to each parcel.</li>
+    <li><strong>For each destination/consignment</strong>, enter postcode, parcel weights, dimensions, and select delivery options. Use the <strong>Add Parcel</strong> button to add parcels to the same destination. Use the <strong>Add Another Consignment</strong> button if sending parcels to multiple destinations.</li>
+    <li><strong>Check the fuel surcharge</strong> and only update if notified by DX.</li>
+    <li><strong>Use DX’s Dispatch Manager 6 Light</strong> to enter each consignment’s details:<br>Depot: 95<br>Account No.: 93022848<br>Password: b25i3c<br>Use the <strong>SMUK quote number</strong> as the consignment reference.</li>
+    <li><strong>Click Calculate Shipping</strong> to get the total price for all consignments.</li>
+    <li><strong>Use the Send Collection Request button</strong> to send the email to request parcel collection before 11am for same day collection, once all parcels are ready for that day.</li>
+    <li><strong>Print labels</strong> using Avery A4 labels stored under the Brother printer and attach labels to each parcel.</li>
+    <li><strong>Print two copies of the manifest</strong> (Dispatch Manager main menu).</li>
+    <li><strong>Driver collection</strong>: Driver signs both manifests, SMUK keeps one copy.</li>
+  </ol>
+  <script>
+    const shipmentsDiv = document.getElementById('shipments');
+    function addShipment() {
+      const shipmentIndex = shipmentsDiv.children.length + 1;
+      const shipment = document.createElement('div');
+      shipment.className = 'shipment';
+      shipment.innerHTML = `
+        <h4>Consignment ${shipmentIndex}</h4>
+        <label>Destination Postcode: <input type="text"></label><br><br>
+        <div class="parcels"></div>
+        <button onclick="addParcel(this)">Add Parcel</button>
+        <div class="extras">
+          <label><input type="radio" name="timing${shipmentIndex}" value="nextday" checked> Standard Next Day (Included)</label>
+          <label><input type="radio" name="timing${shipmentIndex}" value="pre12"> Pre-12 Delivery (+£7.20)</label>
+          <label><input type="radio" name="timing${shipmentIndex}" value="pre930"> Pre-9:30 Delivery (+£30.50)</label>
+          <label><input type="radio" name="timing${shipmentIndex}" value="satam"> Saturday AM (+£32.00)</label>
+          <label><input type="radio" name="timing${shipmentIndex}" value="sat930"> Saturday Pre-9:30 (+£50.00)</label>
+          <label><input type="checkbox" value="residential"> Residential Address (+£10.90)</label>
+          <label><input type="checkbox" value="insurance"> Extra Insurance (up to £5,000) (+£20.00)</label>
+        </div>`;
+      shipmentsDiv.appendChild(shipment);
+      addParcel(shipment.querySelector('button'));
+    }
+    function addParcel(button) {
+      const parcelsDiv = button.previousElementSibling;
+      const parcels = parcelsDiv.querySelectorAll('div');
+      const parcelIndex = parcels.length + 1;
+      const parcel = document.createElement('div');
+      parcel.className = 'parcel-group';
+      let removeBtn = '';
+      if (parcelIndex > 1) {
+        removeBtn = `<button onclick="this.parentNode.remove(); renumberParcels(parcelsDiv)">Remove Parcel</button>`;
+      }
+      parcel.innerHTML = `<strong>Parcel ${parcelIndex}:</strong> <input type="number" placeholder="Weight (kg)">
+        <input type="number" placeholder="Length (cm)">
+        <input type="number" placeholder="Width (cm)">
+        <input type="number" placeholder="Height (cm)">
+        ${removeBtn}`;
+      parcelsDiv.appendChild(parcel);
+      renumberParcels(parcelsDiv);
+    }
+    function renumberParcels(parcelsDiv) {
+      const parcels = parcelsDiv.querySelectorAll('.parcel-group');
+      parcels.forEach((parcel, index) => {
+        parcel.querySelector('strong').textContent = `Parcel ${index + 1}:`;
+      });
+    }
+    document.getElementById('addShipmentBtn').addEventListener('click', addShipment);
+    addShipment();
+  </script>
+</body>
+</html>
